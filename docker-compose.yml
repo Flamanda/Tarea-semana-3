@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  myapp:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: laravel-app-build
+    ports:
+      - 8000:8000
+    volumes:
+      - './laravel-app:/var/www/html'
+
+  laravel:
+    image: docker.io/bitnami/laravel:10
+    container_name: laravel-app
+    ports:
+      - 80:8000
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - './laravel-app:/app'
+    depends_on:
+      - mysql
+    
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456789
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    
+  apache:
+    image: httpd:latest
+    container_name: apache
+    ports:
+      - 8080:80
+    volumes:
+      - ./laravel-app:/usr/local/apache2/htdocs
+    links:
+      - laravel
+
+volumes:
+  mysql-data:
